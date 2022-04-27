@@ -1,0 +1,61 @@
+#!/bin/bash
+set -e
+OUT_PATH=output
+FILE_LIST_PATH=$OUT_PATH/file-list.txt
+MODULES="atomic container lockfree align algorithm asio context filesystem stacktrace beast multiprecision process foreach functional thread uuid"
+
+BOOSTDEP=${BOOSTDEP:-build_tools/Release/boostdep}
+
+# Parse command line args
+FAST=0
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --fast)
+            FAST=1
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Backup deps list if it exists and we're in fast mode
+if [ $FAST -eq 1 ] && [ -f $OUT_PATH/deps.txt ]; then
+    cp $OUT_PATH/deps.txt /tmp/deps.txt.bak
+fi
+
+rm -rf $OUT_PATH
+mkdir -p $OUT_PATH
+
+DEP_LIST_PATH=$OUT_PATH/deps.txt
+TMP=$OUT_PATH/tmp.txt
+
+if [ $FAST -eq 1 ] && [ -f /tmp/deps.txt.bak ]; then
+    cp /tmp/deps.txt.bak $DEP_LIST_PATH
+else
+    for mod in $MODULES; do
+        echo "Scanning module $mod"
+
+        # Add module itselt
+        echo $mod >>$DEP_LIST_PATH
+
+        # Add all dependent modules
+        $BOOSTDEP --brief $mod >$TMP
+        cat $TMP | sed -e '1d' -e'/# .*/ d' -e '/^[[:space:]]*$/d' >>$DEP_LIST_PATH
+    done
+fi
+
+
+# Make deps unique
+sort $DEP_LIST_PATH | uniq >$OUT_PATH/deps.uniq.txt
+
+# Build file list
+cat $OUT_PATH/deps.uniq.txt | sed -e 's+numeric~conversion+numeric/conversion+' -e 's+^\(.*\)$+libs/\1+' -e '/\(unknown\)/d' >$FILE_LIST_PATH
+echo "tools" >>$FILE_LIST_PATH
+echo "CMakeLists.txt" >>$FILE_LIST_PATH
+echo "LICENSE_1_0.txt" >>$FILE_LIST_PATH
+echo "README.md" >>$FILE_LIST_PATH
+
+# Create archive
+7z a $OUT_PATH/output.7z @$FILE_LIST_PATH -xr!doc -xr!ci -xr!benchmark -xr!test -xr!examples

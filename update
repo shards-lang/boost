@@ -1,0 +1,71 @@
+#!/bin/bash
+set -e
+
+VENDORED=(
+  libs/asio
+  libs/exception
+  libs/lockfree
+  libs/stacktrace
+  # tools/boostdep
+  tools/cmake
+)
+
+UPD_FILE=update.stage
+TARGET_VERSION=$1
+
+if [ ! -f $UPD_FILE ]; then
+  echo "Creating pre-update marker"
+  for v in "${VENDORED[@]}"; do
+    echo "Updating $v"
+    pushd $v
+    git rev-parse --abbrev-ref HEAD
+    git checkout -B _shards_update
+    popd
+  done
+  echo "1" >$UPD_FILE
+fi
+
+if [ $(cat $UPD_FILE) -eq 1 ]; then
+  echo "Rebasing onto $TARGET_VERSION"
+  for v in "${VENDORED[@]}"; do
+    echo "Updating $v to $TARGET_VERSION"
+    pushd $v
+    git rev-parse --abbrev-ref HEAD
+    git fetch --all
+    git rebase -i $TARGET_VERSION
+    popd
+  done
+  echo "2" >$UPD_FILE
+fi
+
+if [ $(cat $UPD_FILE) -eq 2 ]; then
+  for v in "${VENDORED[@]}"; do
+    echo "Updating $v to $TARGET_VERSION"
+    pushd $v
+    if git rebase --show-current-patch >/dev/null 2>&1; then
+      echo "Rebase in progress for $v, skipping"
+      exit 1
+    fi
+    popd
+  done
+  echo "All rebases finished"
+
+  # Tag the new commits and push
+  for v in "${VENDORED[@]}"; do
+    NEW=${TARGET_VERSION/boost-/shards-}
+    echo "Updating $v to ${NEW}"
+    pushd $v
+    git checkout -B ${NEW}
+    git push origin ${NEW}
+    popd
+  done
+
+  echo "3" >$UPD_FILE
+fi
+
+# Add all the new commits to the index
+for v in "${VENDORED[@]}"; do
+  echo "Adding $v to the index"
+  git add $v
+done
+

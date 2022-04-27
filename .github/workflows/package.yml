@@ -1,0 +1,32 @@
+name: Bundle sources
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+        submodules: recursive
+    - name: Setup
+      run: |
+        ./bootstrap.sh
+        ./b2 tools/boostdep/build
+    - name: Package
+      run: |
+        ./package_shards
+        BODY=output/body.txt
+        echo "Automatically generated release" >$BODY
+        sha256sum output/output.7z >>$BODY
+    - name: Make release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        bodyFile: output/body.txt
+        artifacts: "output/output.7z"
+        token: ${{secrets.GITHUB_TOKEN}}
