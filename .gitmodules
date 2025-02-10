@@ -70,7 +70,7 @@
 	branch = .
 [submodule "exception"]
 	path = libs/exception
-	url = https://github.com/boostorg/exception.git
+	url = https://github.com/shards-lang/boost-exception.git
 	fetchRecurseSubmodules = on-demand
 	branch = .
 [submodule "foreach"]
