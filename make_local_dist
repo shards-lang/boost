@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+# Clean and create dist folder
+rm -rf dist
+mkdir -p dist
+
+# Run package_shards script
+./package_shards
+
+# Extract output archive to dist folder
+7z x output/output.7z -odist
