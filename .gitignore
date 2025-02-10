@@ -13,3 +13,6 @@
 /.settings/
 /.project
 /.pydevproject
+/build_tools
+/output
+/dist

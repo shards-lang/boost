@@ -27,3 +27,10 @@ To update this repository use a `git rebase -i <commit>`, where `<commit>` is pr
 Make sure to include the commits containing this doc and package script on top of the rebase, alongside and submodule modifications. To keep it easy to update, you should tag shards specific commits with `[shards]`
 
 NOTE: Any newly added submodules by boost should be modified to reference the absolute url, e.g. `https://github.com/boostorg/url.git` instead of `../url.git`
+
+
+## Building boostdep
+
+just run `cmake -Bbuild_tools tools/boostdep` then `cmake --build build_tools --target boostdep --config Release`
+
+Update BOOSTDEP to point to the binary
