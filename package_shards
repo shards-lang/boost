@@ -2,7 +2,7 @@
 set -e
 OUT_PATH=output
 FILE_LIST_PATH=$OUT_PATH/file-list.txt
-MODULES="atomic container lockfree align algorithm asio context filesystem stacktrace beast multiprecision process foreach functional thread uuid"
+MODULES="atomic container lockfree align algorithm asio context filesystem stacktrace beast multiprecision process foreach functional thread uuid tti"
 
 BOOSTDEP=${BOOSTDEP:-build_tools/Release/boostdep}
 
